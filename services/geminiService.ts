@@ -4,38 +4,43 @@ export const analyzePlantImage = async (imageBuffer: string) => {
 
   const base64Data = imageBuffer.includes(",") ? imageBuffer.split(",")[1] : imageBuffer;
 
-  const prompt = `Você é um especialista em botânica litúrgica. Analise a imagem e identifique a planta.
-  Retorne APENAS um objeto JSON com esta estrutura exata:
+  const prompt = `Aja como um Babalawo e Botânico. Identifique a planta nesta imagem. 
+  Se for Boldo, identifique como Boldo. Se for Peregun, identifique como Peregun.
+  Retorne APENAS um JSON exatamente assim:
   {
-    "scientificName": "Nome científico real",
-    "commonName": "Nome popular real",
-    "orixaRuling": "Orixá regente",
+    "scientificName": "Nome Científico",
+    "commonName": "Nome Popular",
+    "orixaRuling": "Orixá Regente",
     "fundamento": "Quente/Fria/Morna",
-    "fundamentoExplanation": "Explicação do axé",
+    "fundamentoExplanation": "Explicação curta",
     "eweClassification": "Classificação",
-    "ritualNature": "Uso ritualístico",
+    "ritualNature": "Uso",
     "applicationLocation": ["Local"],
     "stepByStepInstructions": ["Passo 1"],
-    "prayer": { "title": "Título", "text": "Reza" },
-    "goldenTip": { "title": "Dica", "content": "Segredo" },
+    "prayer": { "title": "Reza", "text": "Texto" },
+    "goldenTip": { "title": "Segredo", "content": "Dica" },
     "elements": "Elemento",
     "historicalContext": "História",
     "safetyWarnings": "Avisos",
-    "suggestedTitle": "Título da Análise"
+    "suggestedTitle": "Título"
   }`;
 
   const response = await fetch(url, {
     method: 'POST',
     body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: "image/jpeg", data: base64Data } }] }]
+      contents: [{ parts: [
+        { text: prompt },
+        { inlineData: { mimeType: "image/jpeg", data: base64Data } }
+      ]}]
     }),
     headers: { 'Content-Type': 'application/json' }
   });
 
   const data = await response.json();
   
+  // Se a IA falhar, o erro aparecerá aqui
   if (!data.candidates || data.candidates.length === 0) {
-    throw new Error("A mata não revelou seus segredos. Tente uma foto mais clara.");
+    throw new Error("A IA não conseguiu analisar a imagem.");
   }
 
   const textResponse = data.candidates[0].content.parts[0].text;
