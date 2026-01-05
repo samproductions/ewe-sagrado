@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect } from 'react';
 import { analyzePlantImage } from './services/geminiService';
 import { PlantAnalysis, AppStatus, HistoryItem } from './types';
@@ -31,7 +30,7 @@ const App: React.FC = () => {
   const saveToHistory = (analysis: PlantAnalysis, preview: string) => {
     const newItem: HistoryItem = {
       id: crypto.randomUUID(),
-      title: analysis.suggestedTitles || analysis.commonName,
+      title: analysis.suggestedTitle || analysis.commonName,
       analysis,
       previewUrl: preview,
       timestamp: Date.now()
@@ -53,11 +52,11 @@ const App: React.FC = () => {
       try {
         const analysis = await analyzePlantImage(b64);
         
-        // Validação de segurança: se a análise vier incompleta, preenchemos o básico
+        // CORREÇÃO: Usando os nomes exatos exigidos pelo seu sistema (suggestedTitle e orixaRuling)
         const validAnalysis: PlantAnalysis = {
           scientificName: analysis.scientificName || "Não identificado",
           commonName: analysis.commonName || "Planta Desconhecida",
-          orixRuling: analysis.orixRuling || "Consulte um Zelador",
+          orixaRuling: analysis.orixaRuling || analysis.orixRuling || "Consulte um Zelador",
           fundamento: analysis.fundamento || "Neutro",
           fundamentoExplanation: analysis.fundamentoExplanation || "Não foi possível detalhar o fundamento.",
           eweClassification: analysis.eweClassification || "Geral",
@@ -69,7 +68,7 @@ const App: React.FC = () => {
           elements: analysis.elements || "Terra",
           historicalContext: analysis.historicalContext || "Sem dados históricos.",
           safetyWarnings: analysis.safetyWarnings || "Nenhum",
-          suggestedTitles: analysis.suggestedTitles || "Folha Sagrada"
+          suggestedTitle: analysis.suggestedTitle || analysis.suggestedTitles || "Folha Sagrada"
         };
 
         setResult(validAnalysis);
