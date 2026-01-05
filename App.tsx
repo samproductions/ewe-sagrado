@@ -17,18 +17,21 @@ const App: React.FC = () => {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // Load history from localStorage
   useEffect(() => {
     const saved = localStorage.getItem('ewe_ai_history');
     if (saved) {
-      setHistory(JSON.parse(saved));
+      try {
+        setHistory(JSON.parse(saved));
+      } catch (e) {
+        console.error("Erro ao carregar histórico");
+      }
     }
   }, []);
 
   const saveToHistory = (analysis: PlantAnalysis, preview: string) => {
     const newItem: HistoryItem = {
       id: crypto.randomUUID(),
-      title: analysis.suggestedTitle,
+      title: analysis.suggestedTitles || analysis.commonName,
       analysis,
       previewUrl: preview,
       timestamp: Date.now()
@@ -49,12 +52,32 @@ const App: React.FC = () => {
       
       try {
         const analysis = await analyzePlantImage(b64);
-        setResult(analysis);
+        
+        // Validação de segurança: se a análise vier incompleta, preenchemos o básico
+        const validAnalysis: PlantAnalysis = {
+          scientificName: analysis.scientificName || "Não identificado",
+          commonName: analysis.commonName || "Planta Desconhecida",
+          orixRuling: analysis.orixRuling || "Consulte um Zelador",
+          fundamento: analysis.fundamento || "Neutro",
+          fundamentoExplanation: analysis.fundamentoExplanation || "Não foi possível detalhar o fundamento.",
+          eweClassification: analysis.eweClassification || "Geral",
+          ritualNature: analysis.ritualNature || "Uso Geral",
+          applicationLocation: analysis.applicationLocation || ["Corpo"],
+          stepByStepInstructions: analysis.stepByStepInstructions || ["Lave a folha em água corrente"],
+          prayer: analysis.prayer || { title: "Prece", text: "Que o axé desta folha traga luz." },
+          goldenTips: analysis.goldenTips || { title: "Dica", content: "Mantenha o respeito à natureza." },
+          elements: analysis.elements || "Terra",
+          historicalContext: analysis.historicalContext || "Sem dados históricos.",
+          safetyWarnings: analysis.safetyWarnings || "Nenhum",
+          suggestedTitles: analysis.suggestedTitles || "Folha Sagrada"
+        };
+
+        setResult(validAnalysis);
         setStatus(AppStatus.SUCCESS);
-        saveToHistory(analysis, b64);
+        saveToHistory(validAnalysis, b64);
       } catch (err) {
-        console.error(err);
-        setError("Ocorreu um erro ao consultar o axé da planta. Tente novamente com outra imagem.");
+        console.error("Erro na análise:", err);
+        setError("O segredo da mata exige clareza. Tente outra foto ou verifique sua conexão.");
         setStatus(AppStatus.ERROR);
       }
     };
@@ -86,7 +109,6 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-[#061a11] text-slate-100 overflow-hidden font-sans">
-      {/* Sidebar Overlay for Mobile */}
       {isSidebarOpen && (
         <div 
           className="fixed inset-0 bg-black/60 z-40 md:hidden backdrop-blur-sm"
@@ -94,7 +116,6 @@ const App: React.FC = () => {
         />
       )}
 
-      {/* Sidebar Component */}
       <Sidebar 
         history={history} 
         onSelect={selectFromHistory} 
@@ -104,9 +125,7 @@ const App: React.FC = () => {
         activeId={history.find(h => h.analysis === result)?.id}
       />
 
-      {/* Main Content Area */}
       <div className="flex-1 flex flex-col h-full overflow-hidden relative">
-        {/* Mobile Nav Header */}
         <header className="md:hidden flex items-center justify-between p-4 border-b border-emerald-900/50 bg-[#061a11]/80">
           <button onClick={() => setIsSidebarOpen(true)} className="p-2 text-emerald-500">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -123,14 +142,13 @@ const App: React.FC = () => {
           <div className="max-w-4xl mx-auto h-full flex flex-col">
             {status === AppStatus.IDLE && (
               <div className="flex-1 flex flex-col justify-center">
-                <section className="text-center mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                  <div className="w-20 h-20 bg-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-emerald-500/20">
+                <section className="text-center mb-12">
+                  <div className="w-20 h-20 bg-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
                     <span className="text-4xl">🌿</span>
                   </div>
                   <h1 className="text-4xl md:text-6xl font-bold mb-4 text-emerald-400 font-serif">Ewe Expert</h1>
                   <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
-                    "Identificação Sagrada e Fundamento Ancestral." <br/>
-                    <span className="text-emerald-600/60 mt-2 block italic text-base">— O conhecimento das folhas</span>
+                    "Identificação Sagrada e Fundamento Ancestral."
                   </p>
                 </section>
                 <ImageUploader onImageSelect={handleImageSelect} />
@@ -144,10 +162,7 @@ const App: React.FC = () => {
                 <div className="bg-red-900/20 border border-red-500/50 p-8 rounded-[2rem] text-center max-w-md">
                   <span className="text-4xl mb-4 block">🍂</span>
                   <p className="text-red-400 mb-6 text-lg">{error}</p>
-                  <button 
-                    onClick={reset}
-                    className="bg-red-600 hover:bg-red-500 text-white px-8 py-3 rounded-full transition-all font-bold"
-                  >
+                  <button onClick={reset} className="bg-red-600 hover:bg-red-500 text-white px-8 py-3 rounded-full font-bold">
                     Tentar Novamente
                   </button>
                 </div>
@@ -155,36 +170,22 @@ const App: React.FC = () => {
             )}
 
             {status === AppStatus.SUCCESS && result && (
-              <div className="space-y-10 py-6 animate-in fade-in slide-in-from-bottom-4">
+              <div className="space-y-10 py-6">
                 <div className="flex justify-between items-center sticky top-0 z-10 py-2 bg-[#061a11]/90 backdrop-blur-sm">
-                  <button 
-                    onClick={reset}
-                    className="bg-emerald-900/30 text-emerald-400 hover:bg-emerald-800/50 px-5 py-2 rounded-full flex items-center gap-2 transition-all border border-emerald-500/20 text-sm font-bold"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
-                    </svg>
+                  <button onClick={reset} className="bg-emerald-900/30 text-emerald-400 hover:bg-emerald-800/50 px-5 py-2 rounded-full flex items-center gap-2 border border-emerald-500/20 text-sm font-bold">
                     Nova Identificação
                   </button>
-                  <div className="text-slate-500 text-xs uppercase tracking-tighter hidden md:block">
-                    Ewe Expert: {result.commonName}
-                  </div>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-10">
                   <div className="md:col-span-4 lg:col-span-3">
-                    <div className="sticky top-24">
-                      <div className="rounded-[2.5rem] overflow-hidden border-4 border-emerald-900/50 shadow-2xl relative aspect-[3/4] group">
-                        <img src={previewUrl!} alt="Planta" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/80 via-transparent to-transparent opacity-60"></div>
-                      </div>
-                      <div className="mt-6 p-5 bg-emerald-950/40 rounded-3xl border border-emerald-500/10">
-                        <p className="text-[10px] uppercase tracking-[0.2em] text-emerald-500 font-black mb-2">IDENTIFICAÇÃO</p>
-                        <p className="italic text-xl text-slate-100 font-serif leading-tight">{result.scientificName}</p>
-                      </div>
+                    <div className="rounded-[2.5rem] overflow-hidden border-4 border-emerald-900/50 aspect-[3/4]">
+                      <img src={previewUrl!} alt="Planta" className="w-full h-full object-cover" />
+                    </div>
+                    <div className="mt-6 p-5 bg-emerald-950/40 rounded-3xl border border-emerald-500/10 text-center">
+                      <p className="italic text-xl text-slate-100 font-serif">{result.scientificName}</p>
                     </div>
                   </div>
-                  
                   <div className="md:col-span-8 lg:col-span-9">
                     <AnalysisCard analysis={result} />
                   </div>
