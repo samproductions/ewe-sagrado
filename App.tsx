@@ -6,8 +6,10 @@ import Sidebar from './components/Sidebar';
 import ImageUploader from './components/ImageUploader';
 import AnalysisCard from './components/AnalysisCard';
 import LoadingState from './components/LoadingState';
+import Login from './components/Login';
 
 const App: React.FC = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [status, setStatus] = useState<AppStatus>(AppStatus.IDLE);
   const [result, setResult] = useState<PlantAnalysis | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -77,6 +79,10 @@ const App: React.FC = () => {
     setHistory([]);
     localStorage.removeItem('ewe_ai_history');
   };
+
+  if (!isLoggedIn) {
+    return <Login onLogin={() => setIsLoggedIn(true)} />;
+  }
 
   return (
     <div className="flex h-screen bg-[#061a11] text-slate-100 overflow-hidden font-sans">
