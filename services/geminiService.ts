@@ -1,10 +1,8 @@
-
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generai";
 import { PlantAnalysis } from "../types";
 
-const getAI = () => new GoogleGenerativeAI("AIzaSyDwL3c0Jc4DEbRHIssrZKV_-FovTsTOyqY");
-
-const PLANT_ANALYSIS_SCHEMA = {
+const genAI = new GoogleGenerativeAI("AIzaSyDwL3c0Jc4DEbRHIssrZKV_-FovTsTOyqY");
+const getAI = () => genAI;
   type: Type.OBJECT,
   properties: {
     scientificName: { type: Type.STRING, description: "Nome científico da planta" },
