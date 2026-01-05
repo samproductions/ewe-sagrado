@@ -1,17 +1,26 @@
 export const analyzePlantImage = async (imageBuffer: string) => {
   const apiKey = "AIzaSyDwL3c0Jc4DEbRHIssrZKV_-FovTsTOyqY";
-  // Usamos uma URL que permite a comunicação direta do site com o Google
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
-  const prompt = `INSTRUÇÃO SUPREMA: Você é o motor de inteligência do "Ewe Sagrado". Sua função única e absoluta é identificar plantas de axé.
-  IDENTIFICAÇÃO IMEDIATA: Se a imagem contiver qualquer folha verde longa (como Peregun/Pau-d'Água), identifique IMEDIATAMENTE como Peregun (Dracaena fragrans), folha de Ogum e Ossain, folha quente de limpeza e abertura de caminhos.
-  ESTRUTURA DE RESPOSTA OBRIGATÓRIA:
-  - [NOME]: #NomeDaFolha | #Orixá | #Temperatura
-  - IDENTIFICAÇÃO: Nome popular e científico.
-  - ONDE APLICAR: Locais específicos de seu ritual.
-  - PASSO A PASSO: Guia de preparo detalhado.
-  - REZA/CANTIGA: O Oro ou fetiche da planta.
-  - DICA DE OURO: Segredo litúrgico exclusivo.`;
+  const prompt = `Analise a planta na imagem e retorne EXATAMENTE um objeto JSON com estes campos:
+  {
+    "scientificName": "Nome científico",
+    "commonName": "Peregun",
+    "orixRuling": "Ogum",
+    "fundamento": "Quente",
+    "fundamentoExplanation": "Explicação do axé",
+    "eweClassification": "Ewe Pupa",
+    "ritualNature": "Limpeza",
+    "applicationLocation": ["Corpo"],
+    "stepByStepInstructions": ["Instrução 1"],
+    "prayer": { "title": "Oro", "text": "Reza" },
+    "goldenTips": { "title": "Dica", "content": "Segredo" },
+    "elements": "Ar",
+    "historicalContext": "História",
+    "safetyWarnings": "Nenhum",
+    "suggestedTitles": "Título"
+  }
+  Importante: Retorne APENAS o JSON, sem textos antes ou depois.`;
 
   const body = {
     contents: [{
@@ -22,20 +31,15 @@ export const analyzePlantImage = async (imageBuffer: string) => {
     }]
   };
 
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      body: JSON.stringify(body)
-    });
+  const response = await fetch(url, {
+    method: 'POST',
+    body: JSON.stringify(body)
+  });
 
-    const data = await response.json();
-    
-    if (data.candidates && data.candidates[0].content.parts[0].text) {
-      return data.candidates[0].content.parts[0].text;
-    }
-    throw new Error("Resposta vazia");
-  } catch (error) {
-    console.error("Erro no Axé:", error);
-    throw error;
-  }
+  const data = await response.json();
+  const textResponse = data.candidates[0].content.parts[0].text;
+  
+  // Limpa a resposta para garantir que seja um JSON puro
+  const cleanJson = textResponse.replace(/```json|```/g, "").trim();
+  return JSON.parse(cleanJson);
 };
