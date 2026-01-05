@@ -1,41 +1,44 @@
 export const analyzePlantImage = async (imageBuffer: string) => {
   const apiKey = "AIzaSyDwL3c0Jc4DEbRHIssrZKV_-FovTsTOyqY";
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+
   const base64Data = imageBuffer.includes(",") ? imageBuffer.split(",")[1] : imageBuffer;
 
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      body: JSON.stringify({
-        contents: [{ parts: [
-          { text: "Identifique esta planta de axé e retorne APENAS um JSON com os fundamentos." },
-          { inlineData: { mimeType: "image/jpeg", data: base64Data } }
-        ]}]
-      }),
-      headers: { 'Content-Type': 'application/json' }
-    });
+  const prompt = `Você é um especialista em botânica litúrgica. Analise a imagem e identifique a planta.
+  Retorne APENAS um objeto JSON com esta estrutura exata:
+  {
+    "scientificName": "Nome científico real",
+    "commonName": "Nome popular real",
+    "orixaRuling": "Orixá regente",
+    "fundamento": "Quente/Fria/Morna",
+    "fundamentoExplanation": "Explicação do axé",
+    "eweClassification": "Classificação",
+    "ritualNature": "Uso ritualístico",
+    "applicationLocation": ["Local"],
+    "stepByStepInstructions": ["Passo 1"],
+    "prayer": { "title": "Título", "text": "Reza" },
+    "goldenTip": { "title": "Dica", "content": "Segredo" },
+    "elements": "Elemento",
+    "historicalContext": "História",
+    "safetyWarnings": "Avisos",
+    "suggestedTitle": "Título da Análise"
+  }`;
 
-    const data = await response.json();
-    const textResponse = data.candidates[0].content.parts[0].text;
-    return JSON.parse(textResponse.replace(/```json|```/g, "").trim());
-  } catch (e) {
-    // RESPOSTA DE EMERGÊNCIA: Se tudo falhar, ele identifica como Peregun para você ver o site funcionando
-    return {
-      scientificName: "Dracaena fragrans",
-      commonName: "Peregun",
-      orixaRuling: "Ogum",
-      fundamento: "Quente",
-      fundamentoExplanation: "Folha de extrema importância para limpeza e proteção.",
-      eweClassification: "Ewe Pupa",
-      ritualNature: "Limpeza / Sacudimento",
-      applicationLocation: ["Corpo", "Ambiente"],
-      stepByStepInstructions: ["Macerar em água fria", "Deixar descansar por 3 horas"],
-      prayer: { title: "Oro de Ogum", text: "Peregun a lá de tura..." },
-      goldenTip: { title: "Segredo", content: "Use as folhas em número ímpar." },
-      elements: "Ar e Terra",
-      historicalContext: "Planta ancestral trazida da África.",
-      safetyWarnings: "Uso externo apenas.",
-      suggestedTitle: "O Peregun Sagrado"
-    };
+  const response = await fetch(url, {
+    method: 'POST',
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: "image/jpeg", data: base64Data } }] }]
+    }),
+    headers: { 'Content-Type': 'application/json' }
+  });
+
+  const data = await response.json();
+  
+  if (!data.candidates || data.candidates.length === 0) {
+    throw new Error("A mata não revelou seus segredos. Tente uma foto mais clara.");
   }
+
+  const textResponse = data.candidates[0].content.parts[0].text;
+  const cleanJson = textResponse.replace(/```json|```/g, "").trim();
+  return JSON.parse(cleanJson);
 };
