@@ -4,7 +4,7 @@ export const analyzePlantImage = async (imageBuffer: string) => {
 
   const base64Data = imageBuffer.includes(",") ? imageBuffer.split(",")[1] : imageBuffer;
 
-  const prompt = `Analise a planta e retorne APENAS um objeto JSON exatamente com esta estrutura:
+  const prompt = `Analise a planta e retorne APENAS um objeto JSON com esta estrutura:
   {
     "scientificName": "Nome Científico",
     "commonName": "Peregun",
