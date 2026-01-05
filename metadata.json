@@ -1,0 +1,7 @@
+{
+  "name": "Ewé Sagrado - Identificador de Ervas de Axé",
+  "description": "Um guia especializado em botânica sagrada para identificar plantas e suas funções rituais no Candomblé e na Umbanda através de imagens.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
