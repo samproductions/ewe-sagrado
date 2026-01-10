@@ -38,7 +38,7 @@ const App: React.FC = () => {
   };
 
   const handleImageSelect = useCallback(async (file: File) => {
-    // TRAVA DE SEGURANÇA: Impede disparos múltiplos no iPhone
+    // Impede disparos múltiplos
     if (status === AppStatus.LOADING) return;
 
     setStatus(AppStatus.LOADING);
@@ -104,7 +104,8 @@ const App: React.FC = () => {
                   <h1 className="text-5xl md:text-6xl font-serif font-bold text-white mb-4 tracking-tight">Ewe Expert</h1>
                   <p className="text-emerald-500/70 text-lg font-medium italic">"Ko si ewe, ko si orisa"</p>
                 </section>
-                <ImageUploader onImageSelect={handleImageSelect} disabled={status === AppStatus.LOADING} />
+                {/* Corrigido: Removida a comparação redundante que causava o erro TS2367 */}
+                <ImageUploader onImageSelect={handleImageSelect} disabled={false} />
               </div>
             )}
 
