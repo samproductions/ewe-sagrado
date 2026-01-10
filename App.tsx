@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect } from 'react';
 import { analyzePlantImage } from './services/geminiService';
 import { PlantAnalysis, AppStatus, HistoryItem } from './types';
@@ -18,6 +17,12 @@ const App: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
+    // Verificar se existe uma sessão ativa
+    const activeSession = localStorage.getItem('ewe_active_session');
+    if (activeSession) {
+      setIsLoggedIn(true);
+    }
+
     const saved = localStorage.getItem('ewe_ai_history');
     if (saved) {
       setHistory(JSON.parse(saved));
@@ -59,6 +64,12 @@ const App: React.FC = () => {
     };
     reader.readAsDataURL(file);
   }, [history]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('ewe_active_session');
+    setIsLoggedIn(false);
+    reset();
+  };
 
   const selectFromHistory = (item: HistoryItem) => {
     setResult(item.analysis);
@@ -111,11 +122,23 @@ const App: React.FC = () => {
           <div className="flex items-center gap-2">
              <span className="text-emerald-500 font-bold">Ewe Expert</span>
           </div>
-          <div className="w-8"></div>
+          <button onClick={handleLogout} className="text-slate-500 text-xs font-bold uppercase">Sair</button>
         </header>
 
         <main className="flex-1 overflow-y-auto p-4 md:p-10 scroll-smooth">
           <div className="max-w-4xl mx-auto h-full flex flex-col">
+            <div className="hidden md:flex justify-end mb-4">
+              <button 
+                onClick={handleLogout}
+                className="text-[10px] text-slate-500 hover:text-emerald-500 font-black uppercase tracking-widest transition-colors flex items-center gap-2"
+              >
+                Sair do Sistema
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+              </button>
+            </div>
+
             {status === AppStatus.IDLE && (
               <div className="flex-1 flex flex-col justify-center">
                 <section className="text-center mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -125,7 +148,7 @@ const App: React.FC = () => {
                   <h1 className="text-4xl md:text-6xl font-bold mb-4 text-emerald-400 font-serif">Ewe Expert</h1>
                   <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
                     "Identificação Sagrada e Fundamento Ancestral." <br/>
-                    <span className="text-emerald-600/60 mt-2 block italic text-base">— O conhecimento das folhas</span>
+                    <span className="text-emerald-600/60 mt-2 block italic text-base">— Nação Ketu</span>
                   </p>
                 </section>
                 <ImageUploader onImageSelect={handleImageSelect} />
