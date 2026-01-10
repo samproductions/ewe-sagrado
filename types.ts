@@ -18,7 +18,7 @@ export interface PlantAnalysis {
     title: string;
     content: string;
   };
-  element: string;
+  elements: string;
   historicalContext: string;
   safetyWarnings?: string;
   suggestedTitle: string;
