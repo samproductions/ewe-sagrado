@@ -12,7 +12,7 @@ export interface PlantAnalysis {
   prayer: {
     title: string;
     text: string;
-    translation?: string;
+    translation: string;
   };
   goldenTip: {
     title: string;

@@ -1,13 +1,11 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { PlantAnalysis } from "../types";
 
 export const analyzePlantImage = async (base64Image: string): Promise<PlantAnalysis> => {
-  // O Vite substitui process.env.API_KEY por uma string durante o build
   const apiKey = process.env.API_KEY;
 
-  if (!apiKey || apiKey === "") {
-    throw new Error("Chave de API não configurada. Adicione a variável API_KEY no painel da Vercel.");
+  if (!apiKey || apiKey === "" || apiKey === "undefined") {
+    throw new Error("Chave de API não configurada. Verifique as variáveis de ambiente no Vercel.");
   }
 
   const ai = new GoogleGenAI({ apiKey });
@@ -27,10 +25,11 @@ export const analyzePlantImage = async (base64Image: string): Promise<PlantAnaly
       prayer: {
         type: Type.OBJECT,
         properties: {
-          title: { type: Type.STRING },
-          text: { type: Type.STRING }
+          title: { type: Type.STRING, description: "Título do Òfò ou Reza" },
+          text: { type: Type.STRING, description: "O texto original da reza em Yorùbá (liturgia de Candomblé)" },
+          translation: { type: Type.STRING, description: "Tradução literal ou livre para o Português" }
         },
-        required: ["title", "text"]
+        required: ["title", "text", "translation"]
       },
       goldenTip: {
         type: Type.OBJECT,
@@ -53,9 +52,10 @@ export const analyzePlantImage = async (base64Image: string): Promise<PlantAnaly
     ]
   };
 
-  const prompt = `Você é um botânico sagrado especialista em Ewé (folhas de axé).
-Identifique a planta na imagem e forneça o fundamento litúrgico completo (Candomblé/Umbanda).
-Seja preciso na identificação botânica.
+  const prompt = `Você é um Babalawo e botânico sagrado especialista em Ewé (folhas de axé).
+Identifique a planta na imagem e forneça o fundamento litúrgico exclusivo da tradição de Candomblé.
+A reza (Òfò) DEVE ser em Yorùbá original com os acentos tonais corretos (ẹ, ọ, ṣ, etc.) e sua respectiva tradução para o português.
+Explique detalhadamente por que essa folha pertence ao Orixá mencionado.
 Retorne apenas o JSON.`;
 
   try {
@@ -74,18 +74,15 @@ Retorne apenas o JSON.`;
     });
 
     const responseText = response.text;
-    if (!responseText) throw new Error("A folha não pôde ser revelada (Resposta vazia).");
+    if (!responseText) throw new Error("A folha não pôde ser revelada.");
 
     return JSON.parse(responseText);
   } catch (error: any) {
-    console.error("Erro na API Gemini:", error);
-    
-    // Tratamento de erros comuns de API
+    console.error("Erro na API:", error);
     const msg = error.message || "";
-    if (msg.includes("API key not found") || msg.includes("API_KEY_INVALID")) {
-      throw new Error("A chave de API configurada no Vercel é inválida ou não foi encontrada.");
+    if (msg.includes("leaked") || msg.includes("PERMISSION_DENIED")) {
+      throw new Error("Sua chave de API foi bloqueada por vazamento. Gere uma nova no Google AI Studio.");
     }
-    
-    throw new Error(error.message || "Erro desconhecido ao consultar o axé da planta.");
+    throw new Error("Erro ao consultar o axé da planta. Verifique sua conexão e chave de API.");
   }
 };

@@ -69,7 +69,7 @@ const AnalysisCard: React.FC<AnalysisCardProps> = ({ analysis }) => {
           onClick={() => setActiveTab('reza')}
           className={`px-4 md:px-6 py-4 text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'reza' ? 'text-emerald-400 border-b-4 border-emerald-400' : 'text-slate-500 hover:text-slate-300'}`}
         >
-          ÒFÒ / REZA
+          ÒFÒ (YORÙBÁ)
         </button>
         <button 
           onClick={() => setActiveTab('fundamento')}
@@ -108,7 +108,7 @@ const AnalysisCard: React.FC<AnalysisCardProps> = ({ analysis }) => {
 
             <section className="bg-[#0a2016] border border-emerald-900/50 p-10 rounded-[3rem] shadow-2xl">
               <h3 className="text-xl font-bold text-white mb-8 flex items-center gap-3">
-                <span className="text-emerald-500 text-3xl">🪘</span> PASSO A PASSO DO PREPARO
+                <span className="text-emerald-500 text-3xl">🪘</span> PASSO A PASSO NO CANDOMBLÉ
               </h3>
               <div className="space-y-5">
                 {analysis.stepByStepInstructions.map((step, i) => (
@@ -127,19 +127,29 @@ const AnalysisCard: React.FC<AnalysisCardProps> = ({ analysis }) => {
         {activeTab === 'reza' && (
           <div className="space-y-6 animate-in fade-in slide-in-from-left-4">
             <section className="bg-[#0c1a13] border border-emerald-900/40 p-10 rounded-[3rem] relative overflow-hidden shadow-2xl">
-              <div className="absolute top-0 right-0 p-8 opacity-[0.03] text-[12rem] font-serif select-none">"</div>
-              <h3 className="text-xs font-black text-emerald-500 uppercase tracking-widest mb-6 uppercase">
-                {analysis.prayer.title}
+              <div className="absolute top-0 right-0 p-8 opacity-[0.03] text-[12rem] font-serif select-none italic text-emerald-500">Òfò</div>
+              
+              <h3 className="text-xs font-black text-emerald-500 uppercase tracking-widest mb-6 border-b border-emerald-500/20 pb-2 inline-block">
+                {analysis.prayer.title || "REZA LITÚRGICA EM YORÙBÁ"}
               </h3>
-              <p className="text-3xl font-serif text-white leading-tight mb-8 whitespace-pre-line italic relative z-10">
-                {analysis.prayer.text}
-              </p>
-              <div className="bg-[#04120b] p-6 rounded-2xl border-l-4 border-emerald-600">
-                  <p className="text-slate-400 text-sm leading-relaxed">
-                    Esta é a reza litúrgica transmitida pela tradição oral, usada para ativar o axé da folha.
+              
+              <div className="relative z-10 mb-10">
+                <p className="text-3xl md:text-4xl font-serif text-white leading-tight mb-4 whitespace-pre-line italic">
+                  {analysis.prayer.text}
+                </p>
+              </div>
+
+              <div className="bg-[#04120b] p-8 rounded-3xl border-l-4 border-emerald-600 shadow-xl">
+                  <h4 className="text-[10px] font-black text-emerald-500 uppercase mb-3 tracking-widest">Tradução / Fundamento da Reza</h4>
+                  <p className="text-slate-300 text-lg leading-relaxed font-serif italic">
+                    {analysis.prayer.translation}
                   </p>
                 </div>
             </section>
+            
+            <p className="text-center text-[10px] text-emerald-700 font-bold uppercase tracking-widest px-8">
+              Nota: O Òfò é a palavra de poder que desperta a força vital (Àṣẹ) contida na folha.
+            </p>
           </div>
         )}
 
@@ -157,7 +167,7 @@ const AnalysisCard: React.FC<AnalysisCardProps> = ({ analysis }) => {
              </section>
 
              <section className="bg-emerald-950/20 border border-emerald-500/10 p-10 rounded-[3rem]">
-                <h3 className="text-xs font-black text-emerald-500 uppercase tracking-widest mb-6">FUNDAMENTO & ESSÊNCIA</h3>
+                <h3 className="text-xs font-black text-emerald-500 uppercase tracking-widest mb-6">FUNDAMENTO & ESSÊNCIA NO CANDOMBLÉ</h3>
                 <p className="text-slate-100 text-xl leading-relaxed mb-8 font-serif">{analysis.fundamentoExplanation}</p>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -166,13 +176,13 @@ const AnalysisCard: React.FC<AnalysisCardProps> = ({ analysis }) => {
                     <p className="text-white font-bold">{analysis.elements}</p>
                   </div>
                   <div className="bg-[#04120b] p-6 rounded-2xl border-l-4 border-amber-600">
-                    <p className="text-amber-500 text-[10px] font-black uppercase mb-1 tracking-widest">Classificação</p>
+                    <p className="text-amber-500 text-[10px] font-black uppercase mb-1 tracking-widest">Classificação Litúrgica</p>
                     <p className="text-white font-bold">{analysis.eweClassification}</p>
                   </div>
                 </div>
 
                 <div className="mt-8 pt-8 border-t border-emerald-900/30">
-                  <h4 className="text-[10px] font-black text-emerald-700 uppercase mb-4 tracking-widest">Contexto Histórico / Mitológico</h4>
+                  <h4 className="text-[10px] font-black text-emerald-700 uppercase mb-4 tracking-widest">Contexto Histórico / Itan</h4>
                   <p className="text-slate-400 text-sm leading-relaxed italic">
                     "{analysis.historicalContext}"
                   </p>
@@ -186,7 +196,7 @@ const AnalysisCard: React.FC<AnalysisCardProps> = ({ analysis }) => {
         <div className="p-8 bg-red-950/20 border border-red-900/30 rounded-[2rem] flex items-start gap-6 mt-12">
           <span className="text-3xl mt-1 shrink-0 animate-bounce">⚠</span>
           <div>
-            <h3 className="text-sm font-black text-red-400 mb-2 uppercase tracking-widest">Aviso de Segurança & Respeito</h3>
+            <h3 className="text-sm font-black text-red-400 mb-2 uppercase tracking-widest">Aviso de Respeito e Segurança</h3>
             <p className="text-sm text-red-200/80 leading-relaxed">
               {analysis.safetyWarnings}
             </p>
