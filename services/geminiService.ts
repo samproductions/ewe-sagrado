@@ -5,7 +5,7 @@ export const analyzePlantImage = async (base64Image: string): Promise<PlantAnaly
   const apiKey = process.env.API_KEY;
 
   if (!apiKey || apiKey === "" || apiKey === "undefined") {
-    throw new Error("Chave de API não configurada. Verifique as variáveis de ambiente no Vercel.");
+    throw new Error("Chave de API não configurada no Vercel. Adicione 'API_KEY' nas variáveis de ambiente.");
   }
 
   const ai = new GoogleGenAI({ apiKey });
@@ -16,18 +16,18 @@ export const analyzePlantImage = async (base64Image: string): Promise<PlantAnaly
       scientificName: { type: Type.STRING },
       commonName: { type: Type.STRING },
       orixaRuling: { type: Type.STRING },
-      fundamento: { type: Type.STRING },
+      fundamento: { type: Type.STRING, description: "Ewé Erò (Fria/Calma) ou Ewé Gun (Quente/Estimulante)" },
       fundamentoExplanation: { type: Type.STRING },
-      eweClassification: { type: Type.STRING },
+      eweClassification: { type: Type.STRING, description: "Classificação em Ewé Pupa, Dudu ou Funfun" },
       ritualNature: { type: Type.STRING },
       applicationLocation: { type: Type.ARRAY, items: { type: Type.STRING } },
       stepByStepInstructions: { type: Type.ARRAY, items: { type: Type.STRING } },
       prayer: {
         type: Type.OBJECT,
         properties: {
-          title: { type: Type.STRING, description: "Título do Òfò ou Reza" },
-          text: { type: Type.STRING, description: "O texto original da reza em Yorùbá (liturgia de Candomblé)" },
-          translation: { type: Type.STRING, description: "Tradução literal ou livre para o Português" }
+          title: { type: Type.STRING },
+          text: { type: Type.STRING, description: "Òfò original em Yorùbá com acentuação correta" },
+          translation: { type: Type.STRING, description: "Tradução para o português" }
         },
         required: ["title", "text", "translation"]
       },
@@ -40,7 +40,7 @@ export const analyzePlantImage = async (base64Image: string): Promise<PlantAnaly
         required: ["title", "content"]
       },
       elements: { type: Type.STRING },
-      historicalContext: { type: Type.STRING },
+      historicalContext: { type: Type.STRING, description: "O Itan ou história da folha na Nação Ketu" },
       safetyWarnings: { type: Type.STRING },
       suggestedTitle: { type: Type.STRING }
     },
@@ -52,10 +52,11 @@ export const analyzePlantImage = async (base64Image: string): Promise<PlantAnaly
     ]
   };
 
-  const prompt = `Você é um Babalawo e botânico sagrado especialista em Ewé (folhas de axé).
-Identifique a planta na imagem e forneça o fundamento litúrgico exclusivo da tradição de Candomblé.
-A reza (Òfò) DEVE ser em Yorùbá original com os acentos tonais corretos (ẹ, ọ, ṣ, etc.) e sua respectiva tradução para o português.
-Explique detalhadamente por que essa folha pertence ao Orixá mencionado.
+  const prompt = `Você é um mestre Oníṣègún especializado em Ewé (folhas) na Nação Ketu do Candomblé.
+Analise a imagem e identifique a folha sagrada com absoluta precisão botânica e litúrgica.
+Sua resposta deve focar estritamente nas tradições de Ketu.
+O Òfò (encantamento) deve ser em Yorùbá clássico com a tradução.
+Explique o uso ritual (banhos, limpezas, assentos) conforme a prática de Ketu.
 Retorne apenas o JSON.`;
 
   try {
@@ -73,16 +74,14 @@ Retorne apenas o JSON.`;
       }
     });
 
-    const responseText = response.text;
-    if (!responseText) throw new Error("A folha não pôde ser revelada.");
-
-    return JSON.parse(responseText);
+    const text = response.text;
+    if (!text) throw new Error("A folha não revelou seu Àṣẹ. Tente outra foto.");
+    return JSON.parse(text);
   } catch (error: any) {
     console.error("Erro na API:", error);
-    const msg = error.message || "";
-    if (msg.includes("leaked") || msg.includes("PERMISSION_DENIED")) {
-      throw new Error("Sua chave de API foi bloqueada por vazamento. Gere uma nova no Google AI Studio.");
+    if (error.message?.includes("leaked") || error.message?.includes("403")) {
+      throw new Error("⚠️ Erro de Segurança: Gere uma NOVA CHAVE de API no Google AI Studio, pois a atual foi bloqueada por exposição pública.");
     }
-    throw new Error("Erro ao consultar o axé da planta. Verifique sua conexão e chave de API.");
+    throw new Error(error.message || "Erro ao consultar as folhas.");
   }
 };
