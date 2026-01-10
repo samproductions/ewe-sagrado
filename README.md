@@ -1,20 +1,24 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
 
-# Run and deploy your AI Studio app
+# Ewé Sagrado - Ewe Expert
 
-This contains everything you need to run your app locally.
+Este projeto identifica plantas e ervas de axé utilizando a API do Google Gemini.
 
-View your app in AI Studio: https://ai.studio/apps/drive/17uhW09BOLzFe-XOG66IO0BRagJDNEMjU
+## Configuração para GitHub e Vercel
 
-## Run Locally
+### 1. GitHub
+Suba todos os arquivos para o seu repositório. O arquivo `.gitignore` já está configurado para não enviar pastas desnecessárias.
 
-**Prerequisites:**  Node.js
+### 2. Vercel
+Ao importar o projeto no Vercel:
+- **Framework Preset**: Escolha `Vite` ou deixe em `Other` (ele detectará o Vite).
+- **Build Command**: `npm run build`
+- **Output Directory**: `dist`
+- **Install Command**: `npm install`
 
+**IMPORTANTE:** Adicione a variável de ambiente nas configurações do projeto no Vercel:
+- Key: `API_KEY`
+- Value: `SUA_CHAVE_DA_API_GEMINI`
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## Acesso de Teste
+- **E-mail**: `admin@ewe.com`
+- **Senha**: `ogum123`
