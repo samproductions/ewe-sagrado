@@ -1,5 +1,5 @@
 
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 
 interface ImageUploaderProps {
   onImageSelect: (file: File) => void;
@@ -7,22 +7,78 @@ interface ImageUploaderProps {
 
 const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageSelect }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isCompressing, setIsCompressing] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const compressImage = (file: File): Promise<File> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          // Redimensiona para no máximo 1200px mantendo proporção
+          const MAX_SIZE = 1200;
+          if (width > height) {
+            if (width > MAX_SIZE) {
+              height *= MAX_SIZE / width;
+              width = MAX_SIZE;
+            }
+          } else {
+            if (height > MAX_SIZE) {
+              width *= MAX_SIZE / height;
+              height = MAX_SIZE;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob((blob) => {
+            if (blob) {
+              const compressedFile = new File([blob], file.name, {
+                type: 'image/jpeg',
+                lastModified: Date.now(),
+              });
+              resolve(compressedFile);
+            } else {
+              resolve(file);
+            }
+          }, 'image/jpeg', 0.8); // 80% de qualidade é ideal para IA
+        };
+      };
+    });
+  };
+
+  const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.[0]) {
-      onImageSelect(e.target.files[0]);
+      setIsCompressing(true);
+      const originalFile = e.target.files[0];
+      // Se a imagem for maior que 1MB, comprimimos para garantir o sucesso
+      const processedFile = originalFile.size > 1024 * 1024 
+        ? await compressImage(originalFile) 
+        : originalFile;
+      
+      setIsCompressing(false);
+      onImageSelect(processedFile);
     }
   };
 
   const triggerInput = () => {
-    fileInputRef.current?.click();
+    if (!isCompressing) fileInputRef.current?.click();
   };
 
   return (
     <div className="max-w-xl mx-auto">
       <div 
         onClick={triggerInput}
-        className="group relative cursor-pointer border-2 border-dashed border-emerald-800/50 bg-emerald-900/10 hover:bg-emerald-900/20 hover:border-emerald-500/50 rounded-[2.5rem] p-12 transition-all duration-300 flex flex-col items-center justify-center gap-6"
+        className={`group relative cursor-pointer border-2 border-dashed border-emerald-800/50 bg-emerald-900/10 hover:bg-emerald-900/20 hover:border-emerald-500/50 rounded-[2.5rem] p-12 transition-all duration-300 flex flex-col items-center justify-center gap-6 ${isCompressing ? 'opacity-50 cursor-wait' : ''}`}
       >
         <input 
           type="file" 
@@ -33,15 +89,23 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageSelect }) => {
         />
         
         <div className="w-20 h-20 bg-emerald-950 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-xl border border-emerald-500/20">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
+          {isCompressing ? (
+            <div className="w-10 h-10 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin"></div>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          )}
         </div>
         
         <div className="text-center">
-          <p className="text-xl font-semibold text-slate-200 mb-2">Toque para Identificar</p>
-          <p className="text-slate-500 text-sm">Capture uma foto da folha ou selecione da galeria</p>
+          <p className="text-xl font-semibold text-slate-200 mb-2">
+            {isCompressing ? 'Preparando Imagem...' : 'Toque para Identificar'}
+          </p>
+          <p className="text-slate-500 text-sm">
+            {isCompressing ? 'Otimizando foto para o Axé...' : 'Capture uma foto da folha ou selecione da galeria'}
+          </p>
         </div>
 
         <div className="flex gap-4 mt-4">

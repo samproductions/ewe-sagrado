@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { PlantAnalysis } from "../types";
 
@@ -83,21 +84,21 @@ Retorne apenas o JSON.`;
   } catch (error: any) {
     console.error("Erro na API Gemini:", error);
 
-    // Se for erro de cota e ainda houver tentativas, espera 2 segundos e tenta de novo
+    // Se for erro de cota e ainda houver tentativas, espera 4 segundos (mais tempo de respiro)
     if ((error.status === 429 || error.message?.toLowerCase().includes("quota")) && retries > 0) {
-      await delay(2000);
+      await delay(4000);
       return analyzePlantImage(base64Image, retries - 1);
     }
 
     // Tradução amigável do erro para o usuário
     if (error.status === 429 || error.message?.toLowerCase().includes("quota")) {
-      throw new Error("O limite de consultas gratuitas foi atingido. Aguarde cerca de 1 minuto para o sistema se renovar e tente novamente.");
+      throw new Error("O sistema está recebendo muitas consultas. Aguarde cerca de 1 minuto para o axé se renovar e tente novamente.");
     }
 
     if (error.message?.includes("API key not valid")) {
-      throw new Error("Houve um erro técnico com a chave de acesso. Contate o administrador.");
+      throw new Error("Houve um erro técnico com a chave de acesso. Verifique as configurações.");
     }
 
-    throw new Error("Ocorreu uma interferência na comunicação com as folhas. Verifique sua internet e tente novamente.");
+    throw new Error("As folhas estão em silêncio no momento. Verifique sua conexão e tente uma foto com melhor iluminação.");
   }
 };
