@@ -3,15 +3,8 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { PlantAnalysis } from "../types";
 
 export const analyzePlantImage = async (base64Image: string): Promise<PlantAnalysis> => {
-  // Acessa a chave injetada pelo Vite via process.env.API_KEY (definida no vite.config.ts)
-  const apiKey = (process.env as any).API_KEY;
-
-  if (!apiKey || apiKey === "undefined") {
-    console.error("ERRO: API_KEY não encontrada. Certifique-se de configurá-la no Vercel (Environment Variables).");
-    throw new Error("Chave de API não configurada no servidor.");
-  }
-
-  const ai = new GoogleGenAI({ apiKey });
+  // Inicialização direta conforme diretrizes: sempre usar process.env.API_KEY
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
 
   const PLANT_ANALYSIS_SCHEMA = {
     type: Type.OBJECT,
@@ -54,15 +47,10 @@ export const analyzePlantImage = async (base64Image: string): Promise<PlantAnaly
     ]
   };
 
-  const prompt = `Você é um sistema de alta precisão botânica e litúrgica especializado em Ewé (folhas) de Candomblé e Umbanda.
-Identifique a planta na imagem e retorne seus fundamentos.
-
-DIRETRIZES:
-1. Identificação Visual precisa.
-2. Determine se é Gùn (quente) ou Èrowo (fria).
-3. Forneça o Òfò (reza) em Iorubá com tradução.
-
-Retorne APENAS o JSON conforme o esquema definido.`;
+  const prompt = `Você é um botânico sagrado especialista em Ewé (folhas de axé).
+Identifique a planta na imagem e forneça o fundamento litúrgico completo (Candomblé/Umbanda).
+Seja preciso na identificação botânica.
+Retorne apenas o JSON.`;
 
   try {
     const response = await ai.models.generateContent({
@@ -79,12 +67,16 @@ Retorne APENAS o JSON conforme o esquema definido.`;
       }
     });
 
-    const text = response.text;
-    if (!text) throw new Error("O modelo retornou uma resposta vazia.");
-    
-    return JSON.parse(text);
+    const responseText = response.text;
+    if (!responseText) throw new Error("A folha não pôde ser revelada (Resposta vazia).");
+
+    return JSON.parse(responseText);
   } catch (error: any) {
-    console.error("Erro detalhado na Gemini API:", error);
-    throw error;
+    console.error("Erro na API Gemini:", error);
+    // Se for erro de autenticação/chave, damos uma mensagem mais clara via catch
+    if (error.message?.includes('API_KEY_INVALID') || error.message?.includes('403')) {
+      throw new Error("Erro de autenticação: Verifique se a chave de API no Vercel está correta e ativa.");
+    }
+    throw new Error(error.message || "Erro desconhecido ao consultar o axé da planta.");
   }
 };
