@@ -5,7 +5,7 @@ export const analyzePlantImage = async (base64Image: string): Promise<PlantAnaly
   const apiKey = process.env.API_KEY;
 
   if (!apiKey || apiKey === "" || apiKey === "undefined") {
-    throw new Error("Chave de API não configurada no Vercel. Adicione 'API_KEY' nas variáveis de ambiente.");
+    throw new Error("Configuração pendente: A Chave de API (API_KEY) não foi encontrada no ambiente.");
   }
 
   const ai = new GoogleGenAI({ apiKey });
@@ -56,7 +56,7 @@ export const analyzePlantImage = async (base64Image: string): Promise<PlantAnaly
 Analise a imagem e identifique a folha sagrada com absoluta precisão botânica e litúrgica.
 Sua resposta deve focar estritamente nas tradições de Ketu.
 O Òfò (encantamento) deve ser em Yorùbá clássico com a tradução.
-Explique o uso ritual (banhos, limpezas, assentos) conforme a prática de Ketu.
+Explique o uso ritual conforme a prática de Ketu.
 Retorne apenas o JSON.`;
 
   try {
@@ -75,13 +75,20 @@ Retorne apenas o JSON.`;
     });
 
     const text = response.text;
-    if (!text) throw new Error("A folha não revelou seu Àṣẹ. Tente outra foto.");
+    if (!text) throw new Error("A folha não revelou seu Àṣẹ. Tente outra foto ou iluminação.");
     return JSON.parse(text);
   } catch (error: any) {
-    console.error("Erro na API:", error);
-    if (error.message?.includes("leaked") || error.message?.includes("403")) {
-      throw new Error("⚠️ Erro de Segurança: Gere uma NOVA CHAVE de API no Google AI Studio, pois a atual foi bloqueada por exposição pública.");
+    console.error("Erro detalhado da API:", error);
+    
+    // Tratamento específico de Cota Excedida (429)
+    if (error.message?.toLowerCase().includes("quota") || error.status === 429) {
+      throw new Error("O limite de consultas foi atingido. O Axé das folhas está se renovando... Por favor, aguarde 1 minuto e tente novamente.");
     }
-    throw new Error(error.message || "Erro ao consultar as folhas.");
+
+    if (error.message?.includes("API key not valid")) {
+      throw new Error("⚠️ Erro de Chave: A chave de API configurada é inválida ou expirou.");
+    }
+
+    throw new Error(error.message || "Houve uma interferência na comunicação com as folhas. Tente novamente em instantes.");
   }
 };

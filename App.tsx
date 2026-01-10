@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect } from 'react';
 import { analyzePlantImage } from './services/geminiService';
 import { PlantAnalysis, AppStatus, HistoryItem } from './types';
@@ -19,7 +18,6 @@ const App: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
-    // Validar sessão no carregamento
     const session = authService.getSession();
     if (session) {
       setIsLoggedIn(true);
@@ -59,8 +57,7 @@ const App: React.FC = () => {
         setStatus(AppStatus.SUCCESS);
         saveToHistory(analysis, b64);
       } catch (err: any) {
-        console.error("Erro na aplicação:", err);
-        setError(err.message || "Ocorreu um erro ao consultar o axé da planta. Tente novamente.");
+        setError(err.message);
         setStatus(AppStatus.ERROR);
       }
     };
@@ -165,12 +162,15 @@ const App: React.FC = () => {
 
             {status === AppStatus.ERROR && (
               <div className="flex-1 flex items-center justify-center">
-                <div className="bg-red-950/20 border border-red-500/20 p-12 rounded-[3rem] text-center max-w-md shadow-2xl">
-                  <span className="text-5xl mb-6 block animate-bounce">🍂</span>
-                  <p className="text-red-400 mb-8 text-xl font-medium leading-relaxed">{error}</p>
+                <div className="bg-[#120a0a] border border-red-500/20 p-12 rounded-[3rem] text-center max-w-lg shadow-2xl animate-in zoom-in-95">
+                  <span className="text-5xl mb-6 block">🍂</span>
+                  <h3 className="text-red-500 font-black uppercase tracking-[0.2em] text-xs mb-4">Interferência no Axé</h3>
+                  <p className="text-red-200/80 mb-8 text-lg font-medium leading-relaxed">
+                    {error}
+                  </p>
                   <button 
                     onClick={reset}
-                    className="bg-red-600 hover:bg-red-500 text-white px-10 py-4 rounded-2xl transition-all font-black uppercase tracking-widest text-xs shadow-lg shadow-red-600/20"
+                    className="bg-red-600 hover:bg-red-500 text-white px-10 py-4 rounded-2xl transition-all font-black uppercase tracking-widest text-xs shadow-lg shadow-red-600/40"
                   >
                     Tentar Novamente
                   </button>
