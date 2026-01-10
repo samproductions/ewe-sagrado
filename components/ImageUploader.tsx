@@ -1,4 +1,3 @@
-
 import React, { useRef, useState } from 'react';
 
 interface ImageUploaderProps {
@@ -21,8 +20,8 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageSelect }) => {
           let width = img.width;
           let height = img.height;
 
-          // Redimensiona para no máximo 1200px mantendo proporção
-          const MAX_SIZE = 1200;
+          // Redimensionamento agressivo para 1000px - ideal para leitura de IA e leve para upload
+          const MAX_SIZE = 1000;
           if (width > height) {
             if (width > MAX_SIZE) {
               height *= MAX_SIZE / width;
@@ -38,11 +37,18 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageSelect }) => {
           canvas.width = width;
           canvas.height = height;
           const ctx = canvas.getContext('2d');
-          ctx?.drawImage(img, 0, 0, width, height);
+          
+          // Limpa o canvas e desenha a imagem
+          if (ctx) {
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(img, 0, 0, width, height);
+          }
 
+          // Qualidade 0.5 (50%) reduz o arquivo de 10MB para ~150kb, eliminando erros de cota por tamanho
           canvas.toBlob((blob) => {
             if (blob) {
-              const compressedFile = new File([blob], file.name, {
+              const compressedFile = new File([blob], "folha_scan.jpg", {
                 type: 'image/jpeg',
                 lastModified: Date.now(),
               });
@@ -50,23 +56,27 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageSelect }) => {
             } else {
               resolve(file);
             }
-          }, 'image/jpeg', 0.8); // 80% de qualidade é ideal para IA
+          }, 'image/jpeg', 0.5); 
         };
       };
+      reader.onerror = () => resolve(file);
     });
   };
 
   const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.[0]) {
       setIsCompressing(true);
-      const originalFile = e.target.files[0];
-      // Se a imagem for maior que 1MB, comprimimos para garantir o sucesso
-      const processedFile = originalFile.size > 1024 * 1024 
-        ? await compressImage(originalFile) 
-        : originalFile;
-      
-      setIsCompressing(false);
-      onImageSelect(processedFile);
+      try {
+        const originalFile = e.target.files[0];
+        // Sempre comprimimos fotos da câmera para garantir que o iPhone não trave a API
+        const processedFile = await compressImage(originalFile);
+        onImageSelect(processedFile);
+      } catch (err) {
+        console.error("Erro na compressão:", err);
+        if (e.target.files?.[0]) onImageSelect(e.target.files[0]);
+      } finally {
+        setIsCompressing(false);
+      }
     }
   };
 
@@ -75,10 +85,10 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageSelect }) => {
   };
 
   return (
-    <div className="max-w-xl mx-auto">
+    <div className="max-w-xl mx-auto px-4">
       <div 
         onClick={triggerInput}
-        className={`group relative cursor-pointer border-2 border-dashed border-emerald-800/50 bg-emerald-900/10 hover:bg-emerald-900/20 hover:border-emerald-500/50 rounded-[2.5rem] p-12 transition-all duration-300 flex flex-col items-center justify-center gap-6 ${isCompressing ? 'opacity-50 cursor-wait' : ''}`}
+        className={`group relative cursor-pointer border-2 border-dashed border-emerald-800/50 bg-emerald-900/10 hover:bg-emerald-900/20 hover:border-emerald-500/50 rounded-[2.5rem] p-10 md:p-12 transition-all duration-300 flex flex-col items-center justify-center gap-6 ${isCompressing ? 'opacity-70 cursor-wait' : 'active:scale-95'}`}
       >
         <input 
           type="file" 
@@ -101,23 +111,19 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageSelect }) => {
         
         <div className="text-center">
           <p className="text-xl font-semibold text-slate-200 mb-2">
-            {isCompressing ? 'Preparando Imagem...' : 'Toque para Identificar'}
+            {isCompressing ? 'Otimizando foto...' : 'Toque para Identificar'}
           </p>
-          <p className="text-slate-500 text-sm">
-            {isCompressing ? 'Otimizando foto para o Axé...' : 'Capture uma foto da folha ou selecione da galeria'}
+          <p className="text-slate-500 text-sm max-w-[250px] mx-auto">
+            {isCompressing ? 'Preparando imagem para os Orixás...' : 'Tire uma foto nítida da folha ou escolha da galeria'}
           </p>
         </div>
 
-        <div className="flex gap-4 mt-4">
-          <div className="px-4 py-2 bg-emerald-900/40 rounded-full text-xs text-emerald-400 font-bold border border-emerald-500/20">
-            Candomblé
-          </div>
-          <div className="px-4 py-2 bg-emerald-900/40 rounded-full text-xs text-emerald-400 font-bold border border-emerald-500/20">
-            Umbanda
-          </div>
-          <div className="px-4 py-2 bg-emerald-900/40 rounded-full text-xs text-emerald-400 font-bold border border-emerald-500/20">
-            Botânica
-          </div>
+        <div className="flex flex-wrap justify-center gap-2 mt-2">
+          {['Candomblé', 'Umbanda', 'Botânica'].map(tag => (
+            <div key={tag} className="px-3 py-1 bg-emerald-900/40 rounded-full text-[10px] text-emerald-400 font-black uppercase tracking-widest border border-emerald-500/10">
+              {tag}
+            </div>
+          ))}
         </div>
       </div>
     </div>

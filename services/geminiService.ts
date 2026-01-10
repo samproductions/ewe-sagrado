@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { PlantAnalysis } from "../types";
 
@@ -8,7 +7,7 @@ export const analyzePlantImage = async (base64Image: string, retries = 2): Promi
   const apiKey = process.env.API_KEY;
 
   if (!apiKey || apiKey === "" || apiKey === "undefined") {
-    throw new Error("Configuração pendente: A Chave de API não foi encontrada. Verifique as configurações de ambiente.");
+    throw new Error("Configuração: Chave de API não detectada.");
   }
 
   const ai = new GoogleGenAI({ apiKey });
@@ -19,9 +18,9 @@ export const analyzePlantImage = async (base64Image: string, retries = 2): Promi
       scientificName: { type: Type.STRING },
       commonName: { type: Type.STRING },
       orixaRuling: { type: Type.STRING },
-      fundamento: { type: Type.STRING, description: "Ewé Erò (Fria/Calma) ou Ewé Gun (Quente/Estimulante)" },
+      fundamento: { type: Type.STRING },
       fundamentoExplanation: { type: Type.STRING },
-      eweClassification: { type: Type.STRING, description: "Classificação em Ewé Pupa, Dudu ou Funfun" },
+      eweClassification: { type: Type.STRING },
       ritualNature: { type: Type.STRING },
       applicationLocation: { type: Type.ARRAY, items: { type: Type.STRING } },
       stepByStepInstructions: { type: Type.ARRAY, items: { type: Type.STRING } },
@@ -29,8 +28,8 @@ export const analyzePlantImage = async (base64Image: string, retries = 2): Promi
         type: Type.OBJECT,
         properties: {
           title: { type: Type.STRING },
-          text: { type: Type.STRING, description: "Òfò original em Yorùbá com acentuação correta" },
-          translation: { type: Type.STRING, description: "Tradução para o português" }
+          text: { type: Type.STRING },
+          translation: { type: Type.STRING }
         },
         required: ["title", "text", "translation"]
       },
@@ -43,7 +42,7 @@ export const analyzePlantImage = async (base64Image: string, retries = 2): Promi
         required: ["title", "content"]
       },
       elements: { type: Type.STRING },
-      historicalContext: { type: Type.STRING, description: "O Itan ou história da folha na Nação Ketu" },
+      historicalContext: { type: Type.STRING },
       safetyWarnings: { type: Type.STRING },
       suggestedTitle: { type: Type.STRING }
     },
@@ -55,11 +54,11 @@ export const analyzePlantImage = async (base64Image: string, retries = 2): Promi
     ]
   };
 
-  const prompt = `Você é um mestre Oníṣègún especializado em Ewé (folhas) na Nação Ketu do Candomblé.
-Analise a imagem e identifique a folha sagrada com absoluta precisão botânica e litúrgica.
-Sua resposta deve focar estritamente nas tradições de Ketu.
-O Òfò (encantamento) deve ser em Yorùbá clássico com a tradução.
-Explique o uso ritual conforme a prática de Ketu.
+  const prompt = `Você é um mestre botânico taxonômico e Oníṣègún da Nação Ketu.
+Aja com a precisão do aplicativo PictureThis.
+Analise a imagem focando em nervuras, margem foliar e filotaxia para identificação botânica real.
+Após identificar a espécie, traga o fundamento litúrgico de Ketu.
+Se a imagem estiver muito ruim para identificação, use o campo "safetyWarnings" para avisar.
 Retorne apenas o JSON.`;
 
   try {
@@ -78,27 +77,22 @@ Retorne apenas o JSON.`;
     });
 
     const text = response.text;
-    if (!text) throw new Error("As folhas não responderam ao chamado. Tente uma foto mais nítida.");
+    if (!text) throw new Error("A leitura falhou.");
     return JSON.parse(text);
 
   } catch (error: any) {
-    console.error("Erro na API Gemini:", error);
+    console.error("Erro na API:", error);
 
-    // Se for erro de cota e ainda houver tentativas, espera 4 segundos (mais tempo de respiro)
+    // Se for erro de cota ou rede ocupada, esperamos 5 segundos para limpar o buffer do iPhone
     if ((error.status === 429 || error.message?.toLowerCase().includes("quota")) && retries > 0) {
-      await delay(4000);
+      await delay(5000);
       return analyzePlantImage(base64Image, retries - 1);
     }
 
-    // Tradução amigável do erro para o usuário
     if (error.status === 429 || error.message?.toLowerCase().includes("quota")) {
-      throw new Error("O sistema está recebendo muitas consultas. Aguarde cerca de 1 minuto para o axé se renovar e tente novamente.");
+      throw new Error("O sistema está descansando devido ao excesso de fotos. Aguarde 60 segundos e tente novamente.");
     }
 
-    if (error.message?.includes("API key not valid")) {
-      throw new Error("Houve um erro técnico com a chave de acesso. Verifique as configurações.");
-    }
-
-    throw new Error("As folhas estão em silêncio no momento. Verifique sua conexão e tente uma foto com melhor iluminação.");
+    throw new Error("Não foi possível firmar a imagem. Tente uma foto com fundo neutro e boa luz.");
   }
 };
