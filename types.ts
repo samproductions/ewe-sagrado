@@ -3,10 +3,10 @@ export interface PlantAnalysis {
   scientificName: string;
   commonName: string;
   orixaRuling: string;
-  fundamento: 'Quente' | 'Morna' | 'Fria';
+  fundamento: string; // Quente, Morna ou Fria
   fundamentoExplanation: string;
-  eweClassification: 'Ewe Pupa' | 'Ewe Dudu' | 'Ewe Funfun';
-  ritualNature: 'Descarrego' | 'Energização' | 'Equilíbrio';
+  eweClassification: string; // Ewe Pupa, Ewe Dudu, Ewe Funfun
+  ritualNature: string;
   applicationLocation: string[];
   stepByStepInstructions: string[];
   prayer: {

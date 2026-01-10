@@ -17,7 +17,6 @@ const App: React.FC = () => {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // Load history from localStorage
   useEffect(() => {
     const saved = localStorage.getItem('ewe_ai_history');
     if (saved) {
@@ -52,9 +51,9 @@ const App: React.FC = () => {
         setResult(analysis);
         setStatus(AppStatus.SUCCESS);
         saveToHistory(analysis, b64);
-      } catch (err) {
-        console.error(err);
-        setError("Ocorreu um erro ao consultar o axé da planta. Tente novamente com outra imagem.");
+      } catch (err: any) {
+        console.error("Erro na aplicação:", err);
+        setError(err.message || "Ocorreu um erro ao consultar o axé da planta. Tente novamente.");
         setStatus(AppStatus.ERROR);
       }
     };
@@ -86,7 +85,6 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-[#061a11] text-slate-100 overflow-hidden font-sans">
-      {/* Sidebar Overlay for Mobile */}
       {isSidebarOpen && (
         <div 
           className="fixed inset-0 bg-black/60 z-40 md:hidden backdrop-blur-sm"
@@ -94,7 +92,6 @@ const App: React.FC = () => {
         />
       )}
 
-      {/* Sidebar Component */}
       <Sidebar 
         history={history} 
         onSelect={selectFromHistory} 
@@ -104,9 +101,7 @@ const App: React.FC = () => {
         activeId={history.find(h => h.analysis === result)?.id}
       />
 
-      {/* Main Content Area */}
       <div className="flex-1 flex flex-col h-full overflow-hidden relative">
-        {/* Mobile Nav Header */}
         <header className="md:hidden flex items-center justify-between p-4 border-b border-emerald-900/50 bg-[#061a11]/80">
           <button onClick={() => setIsSidebarOpen(true)} className="p-2 text-emerald-500">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -166,9 +161,6 @@ const App: React.FC = () => {
                     </svg>
                     Nova Identificação
                   </button>
-                  <div className="text-slate-500 text-xs uppercase tracking-tighter hidden md:block">
-                    Ewe Expert: {result.commonName}
-                  </div>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-10">
@@ -177,10 +169,6 @@ const App: React.FC = () => {
                       <div className="rounded-[2.5rem] overflow-hidden border-4 border-emerald-900/50 shadow-2xl relative aspect-[3/4] group">
                         <img src={previewUrl!} alt="Planta" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                         <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/80 via-transparent to-transparent opacity-60"></div>
-                      </div>
-                      <div className="mt-6 p-5 bg-emerald-950/40 rounded-3xl border border-emerald-500/10">
-                        <p className="text-[10px] uppercase tracking-[0.2em] text-emerald-500 font-black mb-2">IDENTIFICAÇÃO</p>
-                        <p className="italic text-xl text-slate-100 font-serif leading-tight">{result.scientificName}</p>
                       </div>
                     </div>
                   </div>
