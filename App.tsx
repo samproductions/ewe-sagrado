@@ -1,6 +1,8 @@
+
 import React, { useState, useCallback, useEffect } from 'react';
 import { analyzePlantImage } from './services/geminiService';
 import { PlantAnalysis, AppStatus, HistoryItem } from './types';
+import { authService } from './services/authService';
 import Sidebar from './components/Sidebar';
 import ImageUploader from './components/ImageUploader';
 import AnalysisCard from './components/AnalysisCard';
@@ -17,9 +19,9 @@ const App: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
-    // Verificar se existe uma sessão ativa
-    const activeSession = localStorage.getItem('ewe_active_session');
-    if (activeSession) {
+    // Validar sessão no carregamento
+    const session = authService.getSession();
+    if (session) {
       setIsLoggedIn(true);
     }
 
@@ -66,7 +68,7 @@ const App: React.FC = () => {
   }, [history]);
 
   const handleLogout = () => {
-    localStorage.removeItem('ewe_active_session');
+    authService.logout();
     setIsLoggedIn(false);
     reset();
   };
@@ -86,8 +88,10 @@ const App: React.FC = () => {
   };
 
   const clearHistory = () => {
-    setHistory([]);
-    localStorage.removeItem('ewe_ai_history');
+    if (confirm("Deseja realmente apagar todo o seu histórico de axé?")) {
+      setHistory([]);
+      localStorage.removeItem('ewe_ai_history');
+    }
   };
 
   if (!isLoggedIn) {
@@ -98,7 +102,7 @@ const App: React.FC = () => {
     <div className="flex h-screen bg-[#061a11] text-slate-100 overflow-hidden font-sans">
       {isSidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black/60 z-40 md:hidden backdrop-blur-sm"
+          className="fixed inset-0 bg-black/70 z-40 md:hidden backdrop-blur-md"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
@@ -113,45 +117,47 @@ const App: React.FC = () => {
       />
 
       <div className="flex-1 flex flex-col h-full overflow-hidden relative">
-        <header className="md:hidden flex items-center justify-between p-4 border-b border-emerald-900/50 bg-[#061a11]/80">
-          <button onClick={() => setIsSidebarOpen(true)} className="p-2 text-emerald-500">
+        <header className="md:hidden flex items-center justify-between p-5 border-b border-emerald-900/30 bg-[#061a11]/90 backdrop-blur-md">
+          <button onClick={() => setIsSidebarOpen(true)} className="p-2 text-emerald-500 hover:bg-emerald-900/30 rounded-xl transition-all">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
           <div className="flex items-center gap-2">
-             <span className="text-emerald-500 font-bold">Ewe Expert</span>
+             <span className="text-emerald-500 font-black tracking-tighter text-xl">Ewe Expert</span>
           </div>
-          <button onClick={handleLogout} className="text-slate-500 text-xs font-bold uppercase">Sair</button>
+          <button onClick={handleLogout} className="text-red-500/70 text-[10px] font-black uppercase tracking-widest p-2">Sair</button>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-4 md:p-10 scroll-smooth">
-          <div className="max-w-4xl mx-auto h-full flex flex-col">
-            <div className="hidden md:flex justify-end mb-4">
+        <main className="flex-1 overflow-y-auto p-4 md:p-12 scroll-smooth">
+          <div className="max-w-5xl mx-auto h-full flex flex-col">
+            <div className="hidden md:flex justify-end mb-8">
               <button 
                 onClick={handleLogout}
-                className="text-[10px] text-slate-500 hover:text-emerald-500 font-black uppercase tracking-widest transition-colors flex items-center gap-2"
+                className="text-[10px] text-slate-500 hover:text-red-400 font-black uppercase tracking-[0.2em] transition-all flex items-center gap-3 bg-emerald-950/20 px-6 py-3 rounded-2xl border border-emerald-900/30"
               >
-                Sair do Sistema
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                Encerrar Sessão
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7" />
                 </svg>
               </button>
             </div>
 
             {status === AppStatus.IDLE && (
               <div className="flex-1 flex flex-col justify-center">
-                <section className="text-center mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                  <div className="w-20 h-20 bg-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-emerald-500/20">
-                    <span className="text-4xl">🌿</span>
+                <section className="text-center mb-16 animate-in fade-in slide-in-from-bottom-8 duration-1000">
+                  <div className="w-24 h-24 bg-gradient-to-br from-emerald-500 to-emerald-800 rounded-[2rem] flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-emerald-500/20 rotate-3 hover:rotate-0 transition-transform duration-500">
+                    <span className="text-5xl">🌿</span>
                   </div>
-                  <h1 className="text-4xl md:text-6xl font-bold mb-4 text-emerald-400 font-serif">Ewe Expert</h1>
-                  <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
-                    "Identificação Sagrada e Fundamento Ancestral." <br/>
-                    <span className="text-emerald-600/60 mt-2 block italic text-base">— Nação Ketu</span>
+                  <h1 className="text-5xl md:text-7xl font-bold mb-6 text-white font-serif tracking-tight">Ewe Expert</h1>
+                  <p className="text-lg md:text-2xl text-slate-400 max-w-2xl mx-auto leading-relaxed font-light">
+                    "O saber das folhas é o despertar dos Orixás."<br/>
+                    <span className="text-emerald-500 font-black mt-4 block italic text-sm tracking-[0.4em] uppercase opacity-60">Nação Ketu • Identificação Ancestral</span>
                   </p>
                 </section>
-                <ImageUploader onImageSelect={handleImageSelect} />
+                <div className="animate-in fade-in zoom-in-95 delay-300">
+                  <ImageUploader onImageSelect={handleImageSelect} />
+                </div>
               </div>
             )}
 
@@ -159,12 +165,12 @@ const App: React.FC = () => {
 
             {status === AppStatus.ERROR && (
               <div className="flex-1 flex items-center justify-center">
-                <div className="bg-red-900/20 border border-red-500/50 p-8 rounded-[2rem] text-center max-w-md">
-                  <span className="text-4xl mb-4 block">🍂</span>
-                  <p className="text-red-400 mb-6 text-lg">{error}</p>
+                <div className="bg-red-950/20 border border-red-500/20 p-12 rounded-[3rem] text-center max-w-md shadow-2xl">
+                  <span className="text-5xl mb-6 block animate-bounce">🍂</span>
+                  <p className="text-red-400 mb-8 text-xl font-medium leading-relaxed">{error}</p>
                   <button 
                     onClick={reset}
-                    className="bg-red-600 hover:bg-red-500 text-white px-8 py-3 rounded-full transition-all font-bold"
+                    className="bg-red-600 hover:bg-red-500 text-white px-10 py-4 rounded-2xl transition-all font-black uppercase tracking-widest text-xs shadow-lg shadow-red-600/20"
                   >
                     Tentar Novamente
                   </button>
@@ -173,30 +179,34 @@ const App: React.FC = () => {
             )}
 
             {status === AppStatus.SUCCESS && result && (
-              <div className="space-y-10 py-6 animate-in fade-in slide-in-from-bottom-4">
-                <div className="flex justify-between items-center sticky top-0 z-10 py-2 bg-[#061a11]/90 backdrop-blur-sm">
+              <div className="space-y-12 py-8 animate-in fade-in slide-in-from-bottom-6 duration-700">
+                <div className="flex justify-between items-center sticky top-0 z-20 py-4 bg-[#061a11]/90 backdrop-blur-xl border-b border-emerald-900/30">
                   <button 
                     onClick={reset}
-                    className="bg-emerald-900/30 text-emerald-400 hover:bg-emerald-800/50 px-5 py-2 rounded-full flex items-center gap-2 transition-all border border-emerald-500/20 text-sm font-bold"
+                    className="bg-emerald-500 text-[#061a11] hover:bg-emerald-400 px-8 py-3 rounded-2xl flex items-center gap-3 transition-all text-xs font-black uppercase tracking-widest shadow-xl shadow-emerald-500/20"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
                     </svg>
-                    Nova Identificação
+                    Nova Consulta
                   </button>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-10">
-                  <div className="md:col-span-4 lg:col-span-3">
-                    <div className="sticky top-24">
-                      <div className="rounded-[2.5rem] overflow-hidden border-4 border-emerald-900/50 shadow-2xl relative aspect-[3/4] group">
-                        <img src={previewUrl!} alt="Planta" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/80 via-transparent to-transparent opacity-60"></div>
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+                  <div className="lg:col-span-4">
+                    <div className="sticky top-28">
+                      <div className="rounded-[3rem] overflow-hidden border-[6px] border-[#0a2016] shadow-2xl relative aspect-[3/4] group">
+                        <img src={previewUrl!} alt="Folha de Axé" className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-emerald-950 via-transparent to-transparent opacity-60"></div>
+                        <div className="absolute bottom-6 left-6 right-6">
+                           <p className="text-[10px] font-black uppercase text-emerald-400 tracking-widest mb-1 opacity-80">Registro Fotográfico</p>
+                           <p className="text-white font-serif italic text-lg">{result.commonName}</p>
+                        </div>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="md:col-span-8 lg:col-span-9">
+                  <div className="lg:col-span-8">
                     <AnalysisCard analysis={result} />
                   </div>
                 </div>
