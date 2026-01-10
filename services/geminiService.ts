@@ -3,8 +3,14 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { PlantAnalysis } from "../types";
 
 export const analyzePlantImage = async (base64Image: string): Promise<PlantAnalysis> => {
-  // Inicialização direta conforme diretrizes: sempre usar process.env.API_KEY
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+  // O Vite substitui process.env.API_KEY por uma string durante o build
+  const apiKey = process.env.API_KEY;
+
+  if (!apiKey || apiKey === "") {
+    throw new Error("Chave de API não configurada. Adicione a variável API_KEY no painel da Vercel.");
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
 
   const PLANT_ANALYSIS_SCHEMA = {
     type: Type.OBJECT,
@@ -73,10 +79,13 @@ Retorne apenas o JSON.`;
     return JSON.parse(responseText);
   } catch (error: any) {
     console.error("Erro na API Gemini:", error);
-    // Se for erro de autenticação/chave, damos uma mensagem mais clara via catch
-    if (error.message?.includes('API_KEY_INVALID') || error.message?.includes('403')) {
-      throw new Error("Erro de autenticação: Verifique se a chave de API no Vercel está correta e ativa.");
+    
+    // Tratamento de erros comuns de API
+    const msg = error.message || "";
+    if (msg.includes("API key not found") || msg.includes("API_KEY_INVALID")) {
+      throw new Error("A chave de API configurada no Vercel é inválida ou não foi encontrada.");
     }
+    
     throw new Error(error.message || "Erro desconhecido ao consultar o axé da planta.");
   }
 };
