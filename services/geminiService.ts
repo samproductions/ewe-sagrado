@@ -1,11 +1,13 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { PlantAnalysis } from "../types";
 
-export const analyzePlantImage = async (base64Image: string): Promise<PlantAnalysis> => {
+const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+
+export const analyzePlantImage = async (base64Image: string, retries = 2): Promise<PlantAnalysis> => {
   const apiKey = process.env.API_KEY;
 
   if (!apiKey || apiKey === "" || apiKey === "undefined") {
-    throw new Error("Configuração pendente: A Chave de API (API_KEY) não foi encontrada no ambiente.");
+    throw new Error("Configuração pendente: A Chave de API não foi encontrada. Verifique as configurações de ambiente.");
   }
 
   const ai = new GoogleGenAI({ apiKey });
@@ -75,20 +77,27 @@ Retorne apenas o JSON.`;
     });
 
     const text = response.text;
-    if (!text) throw new Error("A folha não revelou seu Àṣẹ. Tente outra foto ou iluminação.");
+    if (!text) throw new Error("As folhas não responderam ao chamado. Tente uma foto mais nítida.");
     return JSON.parse(text);
+
   } catch (error: any) {
-    console.error("Erro detalhado da API:", error);
-    
-    // Tratamento específico de Cota Excedida (429)
-    if (error.message?.toLowerCase().includes("quota") || error.status === 429) {
-      throw new Error("O limite de consultas foi atingido. O Axé das folhas está se renovando... Por favor, aguarde 1 minuto e tente novamente.");
+    console.error("Erro na API Gemini:", error);
+
+    // Se for erro de cota e ainda houver tentativas, espera 2 segundos e tenta de novo
+    if ((error.status === 429 || error.message?.toLowerCase().includes("quota")) && retries > 0) {
+      await delay(2000);
+      return analyzePlantImage(base64Image, retries - 1);
+    }
+
+    // Tradução amigável do erro para o usuário
+    if (error.status === 429 || error.message?.toLowerCase().includes("quota")) {
+      throw new Error("O limite de consultas gratuitas foi atingido. Aguarde cerca de 1 minuto para o sistema se renovar e tente novamente.");
     }
 
     if (error.message?.includes("API key not valid")) {
-      throw new Error("⚠️ Erro de Chave: A chave de API configurada é inválida ou expirou.");
+      throw new Error("Houve um erro técnico com a chave de acesso. Contate o administrador.");
     }
 
-    throw new Error(error.message || "Houve uma interferência na comunicação com as folhas. Tente novamente em instantes.");
+    throw new Error("Ocorreu uma interferência na comunicação com as folhas. Verifique sua internet e tente novamente.");
   }
 };
