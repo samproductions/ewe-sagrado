@@ -2,8 +2,14 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { PlantAnalysis } from "../types";
 
-// Asseguramos que process.env.API_KEY seja tratado como string para satisfazer o TypeScript
-const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+// Asseguramos que o TypeScript reconheça process.env
+declare const process: {
+  env: {
+    API_KEY: string;
+  };
+};
+
+const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const PLANT_ANALYSIS_SCHEMA = {
   type: Type.OBJECT,
@@ -90,5 +96,10 @@ FORMATO DE SAÍDA (OBRIGATÓRIO): Retorne APENAS um objeto JSON puro, sem textos
     }
   });
 
-  return JSON.parse(response.text);
+  const responseText = response.text;
+  if (!responseText) {
+    throw new Error("A resposta do modelo está vazia ou é inválida.");
+  }
+
+  return JSON.parse(responseText);
 };
