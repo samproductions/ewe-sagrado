@@ -21,8 +21,8 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageSelect, disabled }
           let width = img.width;
           let height = img.height;
 
-          // 800px é o "ponto doce" para o Gemini: leve e ultra nítido para botânica
-          const MAX_SIZE = 800;
+          // 600px é o limite de segurança para o iPhone não travar o upload
+          const MAX_SIZE = 600;
           if (width > height) {
             if (width > MAX_SIZE) {
               height *= MAX_SIZE / width;
@@ -40,17 +40,18 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageSelect, disabled }
           const ctx = canvas.getContext('2d');
           if (ctx) {
             ctx.imageSmoothingEnabled = true;
-            ctx.imageSmoothingQuality = 'high';
+            ctx.imageSmoothingQuality = 'medium';
             ctx.drawImage(img, 0, 0, width, height);
           }
 
           canvas.toBlob((blob) => {
             if (blob) {
-              resolve(new File([blob], "upload.jpg", { type: 'image/jpeg' }));
+              // Convertendo para JPEG simples para remover metadados pesados do iPhone
+              resolve(new File([blob], "scan.jpg", { type: 'image/jpeg' }));
             } else {
               resolve(file);
             }
-          }, 'image/jpeg', 0.4); // 40% de qualidade reduz o peso em 95% sem perder o Axé
+          }, 'image/jpeg', 0.3); // 30% de qualidade é o ideal para cota gratuita
         };
       };
     });
@@ -60,10 +61,13 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageSelect, disabled }
     const file = e.target.files?.[0];
     if (file && !disabled && !isCompressing) {
       setIsCompressing(true);
-      const optimized = await compressImage(file);
-      onImageSelect(optimized);
-      setIsCompressing(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      try {
+        const optimized = await compressImage(file);
+        onImageSelect(optimized);
+      } finally {
+        setIsCompressing(false);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -78,6 +82,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageSelect, disabled }
           ref={fileInputRef}
           onChange={handleChange}
           accept="image/*"
+          capture="environment"
           className="hidden"
           disabled={disabled || isCompressing}
         />
@@ -95,10 +100,10 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageSelect, disabled }
         
         <div className="text-center">
           <p className="text-xl font-semibold text-slate-200 mb-2">
-            {isCompressing ? 'Consagrando Foto...' : 'Toque para Identificar'}
+            {isCompressing ? 'Preparando Folha...' : 'Toque para Analisar'}
           </p>
           <p className="text-slate-500 text-sm">
-            {isCompressing ? 'Otimizando para o oráculo...' : 'Foto da câmera ou galeria'}
+            {isCompressing ? 'Reduzindo peso da imagem...' : 'Tire uma foto ou escolha da galeria'}
           </p>
         </div>
       </div>

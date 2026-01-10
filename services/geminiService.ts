@@ -3,14 +3,13 @@ import { PlantAnalysis } from "../types";
 
 const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 
-export const analyzePlantImage = async (base64Image: string, retries = 2): Promise<PlantAnalysis> => {
+export const analyzePlantImage = async (base64Image: string, retries = 3): Promise<PlantAnalysis> => {
   const apiKey = process.env.API_KEY;
 
   if (!apiKey || apiKey === "" || apiKey === "undefined") {
-    throw new Error("Erro de Configuração: Chave de API não encontrada.");
+    throw new Error("Erro: API Key não configurada corretamente.");
   }
 
-  // Criamos uma nova instância a cada chamada para garantir o estado limpo
   const ai = new GoogleGenAI({ apiKey });
 
   const PLANT_ANALYSIS_SCHEMA = {
@@ -55,13 +54,16 @@ export const analyzePlantImage = async (base64Image: string, retries = 2): Promi
     ]
   };
 
-  const prompt = `Aja como o aplicativo PictureThis para identificação botânica precisa (nervuras, margens).
-Em seguida, aja como um Oníṣègún de Ketu para o fundamento ritual.
-Identifique a planta na foto e retorne o JSON detalhado.`;
+  // Usando Flash Lite para garantir maior estabilidade em contas gratuitas
+  const model = 'gemini-flash-lite-latest';
+
+  const prompt = `Identifique a planta nesta foto focando na taxonomia (nervuras, bordas).
+Atue como um Oníṣègún experiente de Ketu para explicar o Axé da folha.
+Retorne o JSON conforme o esquema definido.`;
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: model,
       contents: {
         parts: [
           { inlineData: { data: base64Image.split(',')[1], mimeType: 'image/jpeg' } },
@@ -75,23 +77,23 @@ Identifique a planta na foto e retorne o JSON detalhado.`;
     });
 
     const text = response.text;
-    if (!text) throw new Error("Vazio");
+    if (!text) throw new Error("A resposta da API voltou vazia.");
     return JSON.parse(text);
 
   } catch (error: any) {
-    console.error("Gemini Error:", error);
+    console.error("Erro na Chamada:", error);
 
-    // Se for erro de cota (429), esperamos um tempo progressivo (Backoff)
+    // Erro 429 (Quota) - Espera exponencial maior
     if ((error.status === 429 || error.message?.toLowerCase().includes("quota")) && retries > 0) {
-      const waitTime = (3 - retries) * 6000; // 6s na primeira falha, 12s na segunda
+      const waitTime = (4 - retries) * 8000; // 8s, 16s, 24s
       await delay(waitTime);
       return analyzePlantImage(base64Image, retries - 1);
     }
 
     if (error.status === 429 || error.message?.toLowerCase().includes("quota")) {
-      throw new Error("O oráculo está recebendo muitas imagens. Por favor, aguarde 60 segundos para o axé se renovar e tente novamente.");
+      throw new Error("O tráfego de Axé está intenso. Aguarde 60 segundos para que a cota do Google se renove.");
     }
 
-    throw new Error("Não foi possível firmar a imagem. Tente uma foto com fundo liso e luz natural.");
+    throw new Error("Não conseguimos ler a folha agora. Tente novamente com mais luz.");
   }
 };

@@ -13,11 +13,12 @@
             color: #f1f5f9;
             -webkit-tap-highlight-color: transparent;
             overflow-x: hidden;
+            /* Previne o zoom de duplo toque que causa cliques duplos no iPhone */
+            touch-action: manipulation;
         }
         h1, h2, h3 { font-family: 'Playfair Display', serif; }
         .cursor-wait { cursor: wait !important; }
-        /* Impede seleção de texto acidental no iPhone durante cliques rápidos */
-        * { -webkit-user-select: none; user-select: none; }
+        * { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
         input, textarea { -webkit-user-select: text; user-select: text; }
     </style>
 <script type="importmap">
