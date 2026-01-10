@@ -2,9 +2,10 @@ import React, { useRef, useState } from 'react';
 
 interface ImageUploaderProps {
   onImageSelect: (file: File) => void;
+  disabled?: boolean;
 }
 
-const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageSelect }) => {
+const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageSelect, disabled }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isCompressing, setIsCompressing] = useState(false);
 
@@ -20,8 +21,8 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageSelect }) => {
           let width = img.width;
           let height = img.height;
 
-          // Redimensionamento agressivo para 1000px - ideal para leitura de IA e leve para upload
-          const MAX_SIZE = 1000;
+          // 800px é o "ponto doce" para o Gemini: leve e ultra nítido para botânica
+          const MAX_SIZE = 800;
           if (width > height) {
             if (width > MAX_SIZE) {
               height *= MAX_SIZE / width;
@@ -37,58 +38,40 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageSelect }) => {
           canvas.width = width;
           canvas.height = height;
           const ctx = canvas.getContext('2d');
-          
-          // Limpa o canvas e desenha a imagem
           if (ctx) {
             ctx.imageSmoothingEnabled = true;
             ctx.imageSmoothingQuality = 'high';
             ctx.drawImage(img, 0, 0, width, height);
           }
 
-          // Qualidade 0.5 (50%) reduz o arquivo de 10MB para ~150kb, eliminando erros de cota por tamanho
           canvas.toBlob((blob) => {
             if (blob) {
-              const compressedFile = new File([blob], "folha_scan.jpg", {
-                type: 'image/jpeg',
-                lastModified: Date.now(),
-              });
-              resolve(compressedFile);
+              resolve(new File([blob], "upload.jpg", { type: 'image/jpeg' }));
             } else {
               resolve(file);
             }
-          }, 'image/jpeg', 0.5); 
+          }, 'image/jpeg', 0.4); // 40% de qualidade reduz o peso em 95% sem perder o Axé
         };
       };
-      reader.onerror = () => resolve(file);
     });
   };
 
   const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) {
+    const file = e.target.files?.[0];
+    if (file && !disabled && !isCompressing) {
       setIsCompressing(true);
-      try {
-        const originalFile = e.target.files[0];
-        // Sempre comprimimos fotos da câmera para garantir que o iPhone não trave a API
-        const processedFile = await compressImage(originalFile);
-        onImageSelect(processedFile);
-      } catch (err) {
-        console.error("Erro na compressão:", err);
-        if (e.target.files?.[0]) onImageSelect(e.target.files[0]);
-      } finally {
-        setIsCompressing(false);
-      }
+      const optimized = await compressImage(file);
+      onImageSelect(optimized);
+      setIsCompressing(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
-  };
-
-  const triggerInput = () => {
-    if (!isCompressing) fileInputRef.current?.click();
   };
 
   return (
     <div className="max-w-xl mx-auto px-4">
       <div 
-        onClick={triggerInput}
-        className={`group relative cursor-pointer border-2 border-dashed border-emerald-800/50 bg-emerald-900/10 hover:bg-emerald-900/20 hover:border-emerald-500/50 rounded-[2.5rem] p-10 md:p-12 transition-all duration-300 flex flex-col items-center justify-center gap-6 ${isCompressing ? 'opacity-70 cursor-wait' : 'active:scale-95'}`}
+        onClick={() => !disabled && !isCompressing && fileInputRef.current?.click()}
+        className={`group relative cursor-pointer border-2 border-dashed border-emerald-800/50 bg-emerald-900/10 rounded-[2.5rem] p-10 transition-all duration-300 flex flex-col items-center justify-center gap-6 ${disabled || isCompressing ? 'opacity-40 grayscale cursor-not-allowed' : 'active:scale-95 hover:bg-emerald-900/20'}`}
       >
         <input 
           type="file" 
@@ -96,9 +79,10 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageSelect }) => {
           onChange={handleChange}
           accept="image/*"
           className="hidden"
+          disabled={disabled || isCompressing}
         />
         
-        <div className="w-20 h-20 bg-emerald-950 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-xl border border-emerald-500/20">
+        <div className="w-20 h-20 bg-emerald-950 rounded-full flex items-center justify-center shadow-xl border border-emerald-500/20">
           {isCompressing ? (
             <div className="w-10 h-10 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin"></div>
           ) : (
@@ -111,19 +95,11 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageSelect }) => {
         
         <div className="text-center">
           <p className="text-xl font-semibold text-slate-200 mb-2">
-            {isCompressing ? 'Otimizando foto...' : 'Toque para Identificar'}
+            {isCompressing ? 'Consagrando Foto...' : 'Toque para Identificar'}
           </p>
-          <p className="text-slate-500 text-sm max-w-[250px] mx-auto">
-            {isCompressing ? 'Preparando imagem para os Orixás...' : 'Tire uma foto nítida da folha ou escolha da galeria'}
+          <p className="text-slate-500 text-sm">
+            {isCompressing ? 'Otimizando para o oráculo...' : 'Foto da câmera ou galeria'}
           </p>
-        </div>
-
-        <div className="flex flex-wrap justify-center gap-2 mt-2">
-          {['Candomblé', 'Umbanda', 'Botânica'].map(tag => (
-            <div key={tag} className="px-3 py-1 bg-emerald-900/40 rounded-full text-[10px] text-emerald-400 font-black uppercase tracking-widest border border-emerald-500/10">
-              {tag}
-            </div>
-          ))}
         </div>
       </div>
     </div>

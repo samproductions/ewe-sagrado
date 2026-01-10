@@ -7,9 +7,10 @@ export const analyzePlantImage = async (base64Image: string, retries = 2): Promi
   const apiKey = process.env.API_KEY;
 
   if (!apiKey || apiKey === "" || apiKey === "undefined") {
-    throw new Error("Configuração: Chave de API não detectada.");
+    throw new Error("Erro de Configuração: Chave de API não encontrada.");
   }
 
+  // Criamos uma nova instância a cada chamada para garantir o estado limpo
   const ai = new GoogleGenAI({ apiKey });
 
   const PLANT_ANALYSIS_SCHEMA = {
@@ -54,12 +55,9 @@ export const analyzePlantImage = async (base64Image: string, retries = 2): Promi
     ]
   };
 
-  const prompt = `Você é um mestre botânico taxonômico e Oníṣègún da Nação Ketu.
-Aja com a precisão do aplicativo PictureThis.
-Analise a imagem focando em nervuras, margem foliar e filotaxia para identificação botânica real.
-Após identificar a espécie, traga o fundamento litúrgico de Ketu.
-Se a imagem estiver muito ruim para identificação, use o campo "safetyWarnings" para avisar.
-Retorne apenas o JSON.`;
+  const prompt = `Aja como o aplicativo PictureThis para identificação botânica precisa (nervuras, margens).
+Em seguida, aja como um Oníṣègún de Ketu para o fundamento ritual.
+Identifique a planta na foto e retorne o JSON detalhado.`;
 
   try {
     const response = await ai.models.generateContent({
@@ -77,22 +75,23 @@ Retorne apenas o JSON.`;
     });
 
     const text = response.text;
-    if (!text) throw new Error("A leitura falhou.");
+    if (!text) throw new Error("Vazio");
     return JSON.parse(text);
 
   } catch (error: any) {
-    console.error("Erro na API:", error);
+    console.error("Gemini Error:", error);
 
-    // Se for erro de cota ou rede ocupada, esperamos 5 segundos para limpar o buffer do iPhone
+    // Se for erro de cota (429), esperamos um tempo progressivo (Backoff)
     if ((error.status === 429 || error.message?.toLowerCase().includes("quota")) && retries > 0) {
-      await delay(5000);
+      const waitTime = (3 - retries) * 6000; // 6s na primeira falha, 12s na segunda
+      await delay(waitTime);
       return analyzePlantImage(base64Image, retries - 1);
     }
 
     if (error.status === 429 || error.message?.toLowerCase().includes("quota")) {
-      throw new Error("O sistema está descansando devido ao excesso de fotos. Aguarde 60 segundos e tente novamente.");
+      throw new Error("O oráculo está recebendo muitas imagens. Por favor, aguarde 60 segundos para o axé se renovar e tente novamente.");
     }
 
-    throw new Error("Não foi possível firmar a imagem. Tente uma foto com fundo neutro e boa luz.");
+    throw new Error("Não foi possível firmar a imagem. Tente uma foto com fundo liso e luz natural.");
   }
 };

@@ -9,21 +9,16 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #061a11; /* Deep Forest Green */
+            background-color: #061a11;
             color: #f1f5f9;
             -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
         }
-        h1, h2, h3 {
-            font-family: 'Playfair Display', serif;
-        }
-        /* Custom scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #061a11; }
-        ::-webkit-scrollbar-thumb { background: #064e3b; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #10b981; }
-        
-        /* Utility for loading/compressing state */
+        h1, h2, h3 { font-family: 'Playfair Display', serif; }
         .cursor-wait { cursor: wait !important; }
+        /* Impede seleção de texto acidental no iPhone durante cliques rápidos */
+        * { -webkit-user-select: none; user-select: none; }
+        input, textarea { -webkit-user-select: text; user-select: text; }
     </style>
 <script type="importmap">
 {
