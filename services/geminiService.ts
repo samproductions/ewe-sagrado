@@ -2,7 +2,8 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { PlantAnalysis } from "../types";
 
-const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Asseguramos que process.env.API_KEY seja tratado como string para satisfazer o TypeScript
+const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY as string });
 
 const PLANT_ANALYSIS_SCHEMA = {
   type: Type.OBJECT,
